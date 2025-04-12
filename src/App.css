@@ -1,14 +1,12 @@
-
 .app-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center; 
-  justify-content: flex-start; 
-  padding: 20px; 
-  box-sizing: border-box; 
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px;
+  box-sizing: border-box;
 }
-
 
 .scheduler-header {
   display: flex;
@@ -18,7 +16,7 @@
 }
 
 .hour-lines {
-  padding-top: 1px; 
+  padding-top: 1px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -29,7 +27,7 @@
 .hour-line {
   height: calc(70vh / 24);
   display: flex;
-  align-items: center; 
+  align-items: center;
   justify-content: flex-end;
   width: 100%;
   padding-right: 10px;
@@ -37,30 +35,32 @@
 }
 
 .hour-label {
-  font-size: 0.7rem;
-  color: #9e9e9e; 
+  font-size: 0.75rem;
+  color: #9e9e9e;
 }
 
 .task-overlay {
   flex-grow: 1;
   position: relative;
-  padding: 8px; 
+  padding: 8px;
   box-sizing: border-box;
 }
 
 .task-block {
-  box-shadow: '0 1px 3px rgba(0, 0, 0, 0.08)';
+  background: linear-gradient(90deg, #e8f5e9, #c8e6c9);
+  border-left: 4px solid #4caf50;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   padding: 0.75rem;
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
   z-index: 1;
   cursor: pointer;
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .task-block:hover {
-  transform: scale(1.01);
-  box-shadow: '0 3px 7px rgba(0, 0, 0, 0.15)';
+  transform: scale(1.02);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
 }
 
 .task-header {
@@ -72,9 +72,9 @@
 
 .task-title {
   margin: 0;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: '#333';
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
   flex-grow: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -88,8 +88,8 @@
 
 .task-block p {
   margin: 0.25rem 0;
-  font-size: 0.8rem; 
-  color: '#616161'; 
+  font-size: 0.8rem;
+  color: "#616161";
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
