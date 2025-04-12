@@ -46,7 +46,13 @@ function TaskModal({ open, onClose, task }) {
       endTime: endTime.format("HH:mm"),
     };
     if (task) dispatch(editTask(payload));
-    else dispatch(addTask(payload));
+    else {
+      dispatch(addTask(payload));
+      setTitle("");
+      setDescription("");
+      setStartTime(dayjs().hour(9).minute(0));
+      setEndTime(dayjs().hour(10).minute(0));
+    }
     onClose();
   };
 
