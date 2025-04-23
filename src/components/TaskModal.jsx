@@ -9,7 +9,11 @@ import {
   Grid,
   Slide,
 } from "@mui/material";
-import { LocalizationProvider, TimeField } from "@mui/x-date-pickers";
+import {
+  LocalizationProvider,
+  TimeField,
+  TimePicker,
+} from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { useDispatch } from "react-redux";
@@ -111,7 +115,8 @@ function TaskModal({ open, onClose, task }) {
           />
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TimeField
+              <TimePicker
+                timeSteps={{ minutes: 1 }}
                 label="Start Time"
                 value={startTime}
                 onChange={setStartTime}
@@ -122,7 +127,8 @@ function TaskModal({ open, onClose, task }) {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TimeField
+              <TimePicker
+                timeSteps={{ minutes: 1 }}
                 label="End Time"
                 value={endTime}
                 onChange={setEndTime}
