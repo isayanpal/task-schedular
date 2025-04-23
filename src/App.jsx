@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import TaskModal from "./components/TaskModal";
 import TaskDetails from "./components/TaskDetails";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteTask } from "./slices/taskSlice";
 import { SquarePen, Trash2, Eye } from "lucide-react";
-
+import { Tooltip } from "@mui/material";
 
 const taskColors = ["#cce0ff", "#ccf5e0", "#ffe0b2", "#f3e5f5", "#ede7f6"];
 
@@ -20,8 +20,8 @@ function App() {
 
   const dispatch = useDispatch();
 
-  // Time slots for the day
   const timeSlots = [
+    "0:00",
     "1:00",
     "2:00",
     "3:00",
@@ -45,11 +45,11 @@ function App() {
     "21:00",
     "22:00",
     "23:00",
-    "24:00",
   ];
 
   // Get current date formatted
   const getCurrentDate = () => {
+    const now = new Date();
     const days = [
       "Sunday",
       "Monday",
@@ -73,13 +73,10 @@ function App() {
       "November",
       "December",
     ];
-
-    const now = new Date();
     const day = days[now.getDay()];
     const month = months[now.getMonth()];
     const date = now.getDate();
     const year = now.getFullYear();
-
     return `${day}, ${month} ${date}, ${year}`;
   };
 
@@ -114,11 +111,7 @@ function App() {
       const now = new Date();
       const hours = now.getHours();
       const minutes = now.getMinutes();
-
-      // Adjust calculation for 1:00 - 24:00 range (24 hours)
-      // Convert hours to 1-24 format for calculation
-      const displayHour = hours === 0 ? 24 : hours;
-      const totalMinutes = (displayHour - 1) * 60 + minutes;
+      const totalMinutes = hours * 60 + minutes;
       const percentage = (totalMinutes / (24 * 60)) * 100;
       setCurrentTimePosition(percentage);
     };
@@ -132,9 +125,7 @@ function App() {
   // Helper to convert time string to position
   const getTaskPosition = (timeStr) => {
     const [hours, minutes] = timeStr.split(":").map(Number);
-
-    // Calculate position relative to our display range (1:00 - 24:00)
-    const totalMinutes = (hours - 1) * 60 + minutes;
+    const totalMinutes = hours * 60 + minutes;
     return (totalMinutes / (24 * 60)) * 100;
   };
 
@@ -144,7 +135,13 @@ function App() {
     const [endHours, endMinutes] = endTime.split(":").map(Number);
 
     const startTotalMinutes = startHours * 60 + startMinutes;
-    const endTotalMinutes = endHours * 60 + endMinutes;
+    let endTotalMinutes = endHours * 60 + endMinutes;
+
+    // If the end time is before the start time, it spans midnight
+    if (endTotalMinutes <= startTotalMinutes) {
+      endTotalMinutes += 24 * 60; // Add 24 hours in minutes
+    }
+
     const durationMinutes = endTotalMinutes - startTotalMinutes;
 
     // Convert to percentage of our display range (24 hours = 1440 minutes)
@@ -153,73 +150,192 @@ function App() {
 
   // Render task in the calendar
   const renderTask = (task, index) => {
-    const top = getTaskPosition(task.startTime);
-    const height = getTaskHeight(task.startTime, task.endTime);
-    const backgroundColor = taskColors[index % taskColors.length];
+    const [startHour, startMinute] = task.startTime.split(":").map(Number);
+    const [endHour, endMinute] = task.endTime.split(":").map(Number);
 
-    return (
-      <div
-        className="task-block"
-        key={task.id}
-        style={{
-          position: "absolute",
-          top: `${top}%`,
-          height: `${height}%`,
-          left: "10px",
-          right: "10px",
-          backgroundColor,
-          borderLeft: `4px solid ${backgroundColor}`,
-          zIndex: 1,
-        }}
-        onMouseEnter={() => setHoveredTask(task)}
-        onMouseLeave={() => setHoveredTask(null)}
-      >
-        <div className="task-content">
-          <div className="task-header">
-            <div className="task-title-desc-wrapper">
-              <div className="task-title">{task.title}</div>
-              {/* <div className="task-description">
-                {task.description.length > 30
-                  ? `${task.description.substring(0, 30)}...`
-                  : task.description}
-              </div> */}
+    const isOvernight =
+      endHour < startHour || (endHour === startHour && endMinute < startMinute);
+
+    if (isOvernight) {
+      const endOfDay = "23:59";
+      const startOfNextDay = "00:00";
+
+      const topEndOfDay = getTaskPosition(task.startTime);
+      const heightEndOfDay = getTaskHeight(task.startTime, endOfDay);
+
+      const topStartOfDay = getTaskPosition(startOfNextDay); // Should be 0
+      const heightStartOfDay = getTaskHeight(startOfNextDay, task.endTime);
+
+      const backgroundColor = taskColors[index % taskColors.length];
+
+      return (
+        <React.Fragment key={`${task.id}-overnight-fragment`}>
+          {/* Part 1: End of Day */}
+          <Tooltip
+            title={
+              task.description.length > 15
+                ? `${task.description.substring(0, 15)}...`
+                : `Click to view ${task.description}`
+            }
+            key={task.id}
+            arrow
+          >
+            <div
+              className="task-block overnight-part-1"
+              style={{
+                position: "absolute",
+                top: `${topEndOfDay}%`,
+                height: `${heightEndOfDay}%`,
+                left: "10px",
+                right: "10px",
+                backgroundColor,
+                borderLeft: `4px solid ${backgroundColor}`,
+                zIndex: 1,
+                opacity: 0.8,
+              }}
+            >
+              <div className="task-content">
+                <div className="task-header">
+                  <div className="task-title">{task.title} (Cont.)</div>
+                </div>
+              </div>
             </div>
-            <div className="task-actions">
-              <button
-                className="task-action-btn edit"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openEdit(task);
-                }}
-              >
-                <SquarePen size={15} />
-              </button>
-              <button
-                className="task-action-btn delete"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(task.id);
-                }}
-              >
-                <Trash2 size={15} />
-              </button>
-              <button
-                className="task-action-btn view"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openDetails(task);
-                }}
-              >
-                <Eye size={15} />
-              </button>
+          </Tooltip>
+
+          {/* Part 2: Start of Next Day */}
+          <Tooltip
+            title={
+              task.description.length > 15
+                ? `${task.description.substring(0, 15)}...`
+                : `Click to view ${task.description}`
+            }
+            key={task.id}
+            arrow
+          >
+            <div
+              className="task-block overnight-part-2"
+              style={{
+                position: "absolute",
+                top: `0%`, // Starts at the top of the next day's view
+                height: `${heightStartOfDay}%`,
+                left: "10px",
+                right: "10px",
+                backgroundColor,
+                borderLeft: `4px solid ${backgroundColor}`,
+                zIndex: 1,
+                fontStyle: "italic",
+              }}
+            >
+              <div className="task-content">
+                <div className="task-header">
+                  <div className="task-title">(Cont.) {task.title}</div>
+                  <div className="task-actions">
+                    <button
+                      className="task-action-btn edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(task);
+                      }}
+                    >
+                      <SquarePen size={15} />
+                    </button>
+                    <button
+                      className="task-action-btn delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(task.id);
+                      }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                    <button
+                      className="task-action-btn view"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDetails(task);
+                      }}
+                    >
+                      <Eye size={15} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Tooltip>
+        </React.Fragment>
+      );
+    } else {
+      // Render normal single-day task
+      const top = getTaskPosition(task.startTime);
+      const height = getTaskHeight(task.startTime, task.endTime);
+      const backgroundColor = taskColors[index % taskColors.length];
+
+      return (
+        <Tooltip
+          title={
+            task.description.length > 15
+              ? `${task.description.substring(0, 15)}...`
+              : `Click to view ${task.description}`
+          }
+          key={task.id}
+          arrow
+        >
+          <div
+            className="task-block"
+            key={task.id}
+            style={{
+              position: "absolute",
+              top: `${top}%`,
+              height: `${height}%`,
+              left: "10px",
+              right: "10px",
+              backgroundColor,
+              borderLeft: `4px solid ${backgroundColor}`,
+              zIndex: 1,
+            }}
+            onMouseEnter={() => setHoveredTask(task)}
+            onMouseLeave={() => setHoveredTask(null)}
+          >
+            <div className="task-content">
+              <div className="task-header">
+                <div className="task-title-desc-wrapper">
+                  <div className="task-title">{task.title}</div>
+                </div>
+                <div className="task-actions">
+                  <button
+                    className="task-action-btn edit"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEdit(task);
+                    }}
+                  >
+                    <SquarePen size={15} />
+                  </button>
+                  <button
+                    className="task-action-btn delete"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(task.id);
+                    }}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                  <button
+                    className="task-action-btn view"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openDetails(task);
+                    }}
+                  >
+                    <Eye size={15} />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-          {/* <div className="task-time">
-    {task.startTime} - {task.endTime}
-  </div> */}
-        </div>
-      </div>
-    );
+        </Tooltip>
+      );
+    }
   };
 
   // Clear error after timeout
@@ -231,12 +347,6 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [error]);
-
-  // useEffect(() => {
-  //   if (error) {
-  //     window.alert(error);
-  //   }
-  // }, [error]);
 
   return (
     <div className="app-container">
@@ -275,30 +385,6 @@ function App() {
                 style={{ top: `${currentTimePosition}%` }}
               >
                 <span className="current-time-label">Now</span>
-              </div>
-            )}
-          </div>
-
-          <div className="hovered-task-description">
-            {hoveredTask && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "10%",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  backgroundColor: "#fff",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                  zIndex: 100,
-                }}
-              >
-                <strong>{hoveredTask.title}</strong>
-                <p>{hoveredTask.description.length > 15
-                  ? `${hoveredTask.description.substring(0, 15)}...`
-                  : hoveredTask.description}</p>
               </div>
             )}
           </div>
