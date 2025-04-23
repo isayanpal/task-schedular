@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { isTimeConflict } from '../utils';
+import toast from 'react-hot-toast';
 
 const loadTasksFromStorage = () => {
   const tasks = localStorage.getItem('tasks');
@@ -22,10 +23,12 @@ const tasksSlice = createSlice({
     addTask: (state, action) => {
       if (isTimeConflict(state.tasks, action.payload)) {
         state.error = 'Time Conflict with another task';
+        toast.error('Time Conflict with another task');
       } else {
         state.tasks.push(action.payload);
         state.error = null;
         saveTasksToStorage(state.tasks);
+        toast.success('Task added successfully!');
       }
     },
     editTask: (state, action) => {
@@ -35,10 +38,12 @@ const tasksSlice = createSlice({
         newTasks.splice(index, 1);
         if (isTimeConflict(newTasks, action.payload)) {
           state.error = 'Time conflict with another task.';
+          toast.error('Time conflict with another task.');
         } else {
           state.tasks[index] = action.payload;
           state.error = null;
           saveTasksToStorage(state.tasks);
+          toast.success('Task updated successfully!');
         }
       }
     },
@@ -46,6 +51,7 @@ const tasksSlice = createSlice({
       state.tasks = state.tasks.filter(t => t.id !== action.payload);
       state.error = null;
       saveTasksToStorage(state.tasks);
+      toast.success('Task deleted successfully!');
     },
     clearError: (state) => {
       state.error = null;

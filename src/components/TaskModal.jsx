@@ -7,14 +7,19 @@ import {
   TextField,
   Button,
   Grid,
+  Slide,
 } from "@mui/material";
-import { TimePicker } from "@mui/x-date-pickers/TimePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers";
+import { LocalizationProvider, TimeField } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { useDispatch } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { addTask, editTask } from "../slices/taskSlice";
+import toast from "react-hot-toast";
+
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 function TaskModal({ open, onClose, task }) {
   const [title, setTitle] = useState("");
@@ -38,6 +43,10 @@ function TaskModal({ open, onClose, task }) {
   }, [task]);
 
   const handleSave = () => {
+    if (!title.trim()) {
+      toast.error("Title is required to save a task!");
+      return;
+    }
     const payload = {
       id: task ? task.id : uuidv4(),
       title,
@@ -45,8 +54,9 @@ function TaskModal({ open, onClose, task }) {
       startTime: startTime.format("HH:mm"),
       endTime: endTime.format("HH:mm"),
     };
-    if (task) dispatch(editTask(payload));
-    else {
+    if (task) {
+      dispatch(editTask(payload));
+    } else {
       dispatch(addTask(payload));
       setTitle("");
       setDescription("");
@@ -64,6 +74,9 @@ function TaskModal({ open, onClose, task }) {
         fullWidth
         maxWidth="sm"
         PaperProps={{ style: { borderRadius: 8 } }}
+        TransitionComponent={Transition}
+        keepMounted
+        transitionDuration={{ enter: 300, exit: 200 }}
       >
         <DialogTitle
           sx={{
@@ -98,7 +111,7 @@ function TaskModal({ open, onClose, task }) {
           />
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TimePicker
+              <TimeField
                 label="Start Time"
                 value={startTime}
                 onChange={setStartTime}
@@ -109,7 +122,7 @@ function TaskModal({ open, onClose, task }) {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TimePicker
+              <TimeField
                 label="End Time"
                 value={endTime}
                 onChange={setEndTime}
